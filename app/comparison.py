@@ -426,18 +426,18 @@ def get_visualization():
 
         # Add second y-axis for throughput with better colors
         fig.update_layout(
-            yaxis7=dict(title="Response Time (ms)", titlefont=dict(color='#6c5ce7'), tickfont=dict(color='#dfe6e9')),
-            yaxis8=dict(title="Throughput (req/s)", titlefont=dict(color='#00b894'), tickfont=dict(color='#dfe6e9'), overlaying="y7", side="right")
+            yaxis7=dict(title=dict(text="Response Time (ms)", font=dict(color='#6c5ce7')), tickfont=dict(color='#dfe6e9')),
+            yaxis8=dict(title=dict(text="Throughput (req/s)", font=dict(color='#00b894')), tickfont=dict(color='#dfe6e9'), overlaying="y7", side="right")
         )
 
         # Update axes labels for all charts with better colors
-        fig.update_xaxes(title_text="Time", titlefont=dict(color='#dfe6e9'), tickfont=dict(color='#dfe6e9'), row=1, col=1)
-        fig.update_xaxes(title_text="Time", titlefont=dict(color='#dfe6e9'), tickfont=dict(color='#dfe6e9'), row=1, col=2)
-        fig.update_yaxes(title_text="Memory Usage (%)", titlefont=dict(color='#4a90e2'), tickfont=dict(color='#dfe6e9'), row=1, col=1)
-        fig.update_yaxes(title_text="Cache Hits", titlefont=dict(color='#2ecc71'), tickfont=dict(color='#dfe6e9'), row=1, col=2)
-        fig.update_yaxes(title_text="Memory Usage (%)", titlefont=dict(color='#4a90e2'), tickfont=dict(color='#dfe6e9'), row=2, col=1)
-        fig.update_yaxes(title_text="GB", titlefont=dict(color='#dfe6e9'), tickfont=dict(color='#dfe6e9'), row=3, col=1)
-        fig.update_yaxes(title_text="Value", titlefont=dict(color='#dfe6e9'), tickfont=dict(color='#dfe6e9'), row=3, col=2)
+        fig.update_xaxes(title_text="Time", title_font=dict(color='#dfe6e9'), tickfont=dict(color='#dfe6e9'), row=1, col=1)
+        fig.update_xaxes(title_text="Time", title_font=dict(color='#dfe6e9'), tickfont=dict(color='#dfe6e9'), row=1, col=2)
+        fig.update_yaxes(title_text="Memory Usage (%)", title_font=dict(color='#4a90e2'), tickfont=dict(color='#dfe6e9'), row=1, col=1)
+        fig.update_yaxes(title_text="Cache Hits", title_font=dict(color='#2ecc71'), tickfont=dict(color='#dfe6e9'), row=1, col=2)
+        fig.update_yaxes(title_text="Memory Usage (%)", title_font=dict(color='#4a90e2'), tickfont=dict(color='#dfe6e9'), row=2, col=1)
+        fig.update_yaxes(title_text="GB", title_font=dict(color='#dfe6e9'), tickfont=dict(color='#dfe6e9'), row=3, col=1)
+        fig.update_yaxes(title_text="Value", title_font=dict(color='#dfe6e9'), tickfont=dict(color='#dfe6e9'), row=3, col=2)
 
         return jsonify(fig.to_dict())
     except Exception as e:
