@@ -113,7 +113,3 @@ Some optimization features require administrator privileges:
 - DNS cache flushing
 
 Without admin privileges, the application will still function but with limited optimization capabilities.
-
-## License
-
-MIT License 
