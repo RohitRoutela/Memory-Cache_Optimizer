@@ -7,6 +7,7 @@ import sys
 import time
 import subprocess
 import ctypes
+import concurrent.futures
 
 logger = logging.getLogger(__name__)
 
@@ -192,14 +193,13 @@ class MemoryOptimizer(SystemOptimizer):
     
     @classmethod
     def _safely_clear_temp_directory_with_details(cls, directory, max_files=100):
-        """Safely clear temporary files in a directory with details"""
+        """Safely clear temporary files in a directory with details using multithreading"""
         if not os.path.exists(directory) or not os.path.isdir(directory):
             return 0
-        
+
         count = 0
+        files = []
         try:
-            # Get list of files sorted by modification time (oldest first)
-            files = []
             for item in os.listdir(directory):
                 item_path = os.path.join(directory, item)
                 if os.path.isfile(item_path):
@@ -207,27 +207,32 @@ class MemoryOptimizer(SystemOptimizer):
                         mtime = os.path.getmtime(item_path)
                         files.append((item_path, mtime))
                     except Exception:
-                        # Skip files we can't get info about
                         continue
-            
-            files.sort(key=lambda x: x[1])  # Sort by modification time
-            files = [f[0] for f in files]  # Get just the paths
-            
-            # Clear oldest files first, up to max_files
-            for file_path in files[:max_files]:
+
+            files.sort(key=lambda x: x[1])
+            files = [f[0] for f in files][:max_files]
+
+            def try_delete(file_path):
                 try:
-                    # Try to remove the file
+                    if os.path.getsize(file_path) == 0:
+                        os.remove(file_path)
+                        logger.info(f"Deleted zero-byte file: {file_path}")
+                        return 1
                     os.remove(file_path)
-                    count += 1
+                    return 1
+                except FileNotFoundError:
+                    # File already deleted, not an error
+                    return 0
                 except PermissionError:
-                    # File is in use, skip it
                     logger.debug(f"Skipped file {file_path}: Permission denied")
-                    continue
+                    return 0
                 except Exception as e:
-                    # Log other errors but continue
                     logger.debug(f"Skipped file {file_path}: {str(e)}")
-                    continue
-            
+                    return 0
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+                results = list(executor.map(try_delete, files))
+            count = sum(results)
             logger.info(f"Cleared {count} temp files from {directory}")
             return count
         except Exception as e:
@@ -679,14 +684,13 @@ class CacheOptimizer(SystemOptimizer):
     
     @classmethod
     def _safely_clear_directory_with_details(cls, directory, max_files=1000):
-        """Safely clear files in a directory with details"""
+        """Safely clear files in a directory with details using multithreading"""
         if not os.path.exists(directory) or not os.path.isdir(directory):
             return 0
-        
+
         count = 0
+        files = []
         try:
-            # Get list of files sorted by modification time (oldest first)
-            files = []
             for item in os.listdir(directory):
                 item_path = os.path.join(directory, item)
                 if os.path.isfile(item_path):
@@ -694,31 +698,29 @@ class CacheOptimizer(SystemOptimizer):
                         mtime = os.path.getmtime(item_path)
                         files.append((item_path, mtime))
                     except Exception:
-                        # Skip files we can't get info about
                         continue
-            
-            files.sort(key=lambda x: x[1])  # Sort by modification time
-            files = [f[0] for f in files]  # Get just the paths
-            
-            # Clear oldest files first, up to max_files
-            for file_path in files[:max_files]:
+
+            files.sort(key=lambda x: x[1])
+            files = [f[0] for f in files][:max_files]
+
+            def try_delete(file_path):
                 try:
-                    # Skip if file is in use
                     if cls._is_file_in_use(file_path):
-                        continue
-                    
-                    # Try to remove the file
+                        return 0
                     os.remove(file_path)
-                    count += 1
+                    return 1
+                except FileNotFoundError:
+                    return 0
                 except PermissionError:
-                    # File is in use or protected
                     logger.debug(f"Skipped file {file_path}: Permission denied")
-                    continue
+                    return 0
                 except Exception as e:
-                    # Log other errors but continue
                     logger.debug(f"Skipped file {file_path}: {str(e)}")
-                    continue
-            
+                    return 0
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+                results = list(executor.map(try_delete, files))
+            count = sum(results)
             logger.info(f"Cleared {count} files from {directory}")
             return count
         except Exception as e:
